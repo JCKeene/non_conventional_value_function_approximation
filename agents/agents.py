@@ -47,13 +47,11 @@ class Agent(ABC):
         observation_space: gym.Space,
         gamma: float,
         epsilon: float,
-        target_update_freq: int,
-        update_counter: int
+        target_update_freq: int
     ):
 
         self.action_space = action_space
         self.observation_space = observation_space
-
         self.target_update_freq = target_update_freq
         self.gamma = gamma
         self.epsilon = epsilon
@@ -185,7 +183,7 @@ class DQNAgent(Agent):
         lr_gamma: float, 
         **kwargs
     ):
-        
+        print("HERE")
         super().__init__(
             action_space, 
             observation_space,
