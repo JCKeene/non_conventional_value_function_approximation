@@ -130,6 +130,21 @@ class Agent(ABC):
    
         return {"q_loss": q_loss.item()}
 
+    def _inputSize(self, observation_space):
+        """
+            Input size for agent FA
+        """
+        if isinstance(observation_space, gym.spaces.discrete.Discrete):
+            # Single dim discrete 
+            input_size = observation_space.n
+        elif isinstance(observation_space, gym.spaces.box.Box): 
+            # Single dim continuous
+            input_size = observation_space.shape[0]
+        elif isinstance(observation_space, gym.spaces.tuple.Tuple):
+            # Multi dim
+            input_size = len(observation_space.spaces)
+        return input_size
+
 
 class DQNAgent(Agent):
     '''
@@ -183,7 +198,6 @@ class DQNAgent(Agent):
         lr_gamma: float, 
         **kwargs
     ):
-        print("HERE")
         super().__init__(
             action_space, 
             observation_space,
@@ -195,10 +209,14 @@ class DQNAgent(Agent):
         self.max_deduct = max_deduct
         self.decay = decay
 
-        if observation_space.shape == ():
-            input_size = observation_space.n
-        else:
-            input_size = observation_space.shape[0]
+        #Setting Input Size
+        # If a single dimensionsal discrete obs space
+        # if observation_space.shape == ():
+        #     input_size = observation_space.n
+        # else:
+        #     input_size = observation_space.shape[0]
+
+        input_size = self._inputSize(observation_space)
 
         self.model = fa((input_size, *hidden_size, action_space.n))
 
@@ -285,10 +303,12 @@ class LinearAgent(Agent):
         self.max_deduct = max_deduct
         self.decay = decay
         
-        if observation_space.shape == ():
-            input_size = observation_space.n
-        else:
-            input_size = observation_space.shape[0]
+        # if observation_space.shape == ():
+        #     input_size = observation_space.n
+        # else:
+        #     input_size = observation_space.shape[0]
+
+        input_size = self._inputSize(observation_space)
 
         self.model = fa(input_size, action_space.n, poly_degree)
         
@@ -580,11 +600,13 @@ class OnlineGaussianProccessAgent():
         self.encoded_actions = self._encode_actions()
         self.model = fa(**model_params)
 
-        if observation_space.shape == ():
-            input_size = observation_space.n
-        else:
-            input_size = observation_space.shape[0]
+        # if observation_space.shape == ():
+        #     input_size = observation_space.n
+        # else:
+        #     input_size = observation_space.shape[0]
         
+        input_size = self._inputSize(observation_space)
+
         self.X = np.zeros((1, input_size + self.action_space.n))
     
     def _one_hot(self, length, index):

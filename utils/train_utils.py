@@ -110,7 +110,7 @@ def play_episode(
 
         # break if maximum steps have been reached
         if max_steps == episode_timesteps:
-            env.render(close = True)
+            #env.render()
             break
         obs = next_obs
 
