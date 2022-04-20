@@ -608,6 +608,21 @@ class OnlineGaussianProccessAgent():
         input_size = self._inputSize(observation_space)
 
         self.X = np.zeros((1, input_size + self.action_space.n))
+
+    def _inputSize(self, observation_space):
+        """
+            Input size for agent FA
+        """
+        if isinstance(observation_space, gym.spaces.discrete.Discrete):
+            # Single dim discrete 
+            input_size = observation_space.n
+        elif isinstance(observation_space, gym.spaces.box.Box): 
+            # Single dim continuous
+            input_size = observation_space.shape[0]
+        elif isinstance(observation_space, gym.spaces.tuple.Tuple):
+            # Multi dim
+            input_size = len(observation_space.spaces)
+        return input_size
     
     def _one_hot(self, length, index):
         '''

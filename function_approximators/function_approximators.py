@@ -312,11 +312,13 @@ class SupportVectorRegressor(NonParametricModel):
         support vector regression model
     
     '''
-    def __init__(self, kernel, degree, C):
+    def __init__(self, kernel, degree, C, gamma):
+
+        print("Initialising SVR with gamma = {}".format(gamma))
 
         self.model = SVR(kernel=kernel,
                          degree=degree, 
-                         C=C)
+                         C=C, gamma=gamma)
 
 class KNeighboursRegressor(NonParametricModel):
     '''
