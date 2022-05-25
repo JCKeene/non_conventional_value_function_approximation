@@ -12,6 +12,7 @@ from torch.optim.lr_scheduler import StepLR
 from typing import Iterable
 from abc import ABC, abstractmethod
 from collections import deque
+import random
 
 
 class Agent(ABC):  
@@ -484,9 +485,29 @@ class FQIAgent():
                 Q = [self._predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
             else:
                 Q = [self.model.predict(np.concatenate([obs, self.encoded_actions[i]],-1).reshape(1,-1)) for i in range(self.action_space.n)]
-            action = np.argmax(Q)
-        
+            #action = np.argmax(Q)
+            action = self.myArgMax(Q)
+            
+            #print("My ARG")
+            #print(self.myArgMax(Q))
+            #print(" Not exploring, using defined Q: ", Q)
+
+        #print(obs)
+        #print(action)
+
         return action
+
+
+    def myArgMax(self, Q):
+        """ Used to break ties in a Q matrix when multiple maxes exist"""
+
+        base_action = np.argmax(Q)
+        all_potential_actions = np.where(Q == Q[base_action])[0]
+        #print(all_potential_actions)
+        action = random.choice(all_potential_actions)
+        #print("the action: ", action)
+        return action
+
 
     def update(self, batch):
         '''
@@ -511,7 +532,11 @@ class FQIAgent():
                     preds.append(self.model.predict(next_inputs))
                 
             preds = np.array(preds).T
-            outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(preds, 1).reshape(-1,1)).reshape(-1)  
+            outputs = np.array(batch.rewards + self.gamma * (1-batch.done) * np.max(preds, 1).reshape(-1,1)).reshape(-1)  # Fitted Q Function - alreayd weighted average
+            # print("inputs: ")
+            # print(inputs)
+            # print("outputs: ")
+            # print(outputs)
             self.model.fit(inputs, outputs) 
 
             # check for update condition

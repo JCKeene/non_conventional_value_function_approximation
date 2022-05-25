@@ -75,31 +75,42 @@ def play_episode(
         action = agent.act(obs, explore=explore)
         # agent takes that action in the environment
         next_obs, reward, done, _ = env.step(action) 
+
+        if done:
+            print("JUST FOUND THE END!!!!")
+            print("Episode Timestep = ", episode_timesteps)
         
         # if training, update model parameters
-        if train and not online:  
-            replay_buffer.push(
-                np.array(obs, dtype=np.float32),
-                np.array([action], dtype=np.float32),
-                np.array(next_obs, dtype=np.float32),
-                np.array([reward], dtype=np.float32),
-                np.array([done], dtype=np.float32),
-            )
-            if len(replay_buffer) >= batch_size:
-                if threshold > -1:
-                    batch = replay_buffer.sample(replay_buffer.count)
-                else:
-                    batch = replay_buffer.sample(batch_size)
-                if non_param:
-                    if not agent.fitted:
-                        agent.initial_fit(batch)
+        if train and not online: 
+            if not online: # Offline - using replay buffer
+                replay_buffer.push(
+                    np.array(obs, dtype=np.float32),
+                    np.array([action], dtype=np.float32),
+                    np.array(next_obs, dtype=np.float32),
+                    np.array([reward], dtype=np.float32),
+                    np.array([done], dtype=np.float32))
+                
+                if len(replay_buffer) >= batch_size:
+                    #print("Updating Model: ")
+                    #print("Episode Timestep = ", episode_timesteps)
+
+                    #collect batch for training of model
+                    if threshold > -1:
+                        batch = replay_buffer.sample(replay_buffer.count)
                     else:
-                        agent.update(batch)
-                else:
-                    loss = agent.update(batch)["q_loss"]
-                    losses.append(loss)
-        elif train:
-            agent.update(obs, next_obs, reward, action, done)
+                        batch = replay_buffer.sample(batch_size)
+
+                    if non_param:
+                        if not agent.fitted:
+                            agent.initial_fit(batch)
+                        else:
+                            agent.update(batch)
+
+                    else:
+                        loss = agent.update(batch)["q_loss"]
+                        losses.append(loss)
+            else: # Is online
+                agent.update(obs, next_obs, reward, action, done)
         
         episode_timesteps += 1
         episode_return += reward
@@ -115,6 +126,16 @@ def play_episode(
         obs = next_obs
 
     return episode_timesteps, episode_return, losses
+
+
+
+
+
+
+
+
+
+
 
 
 def train(env, config, fa, agent, output = True, render=False, online=False, threshold=-1):
@@ -175,7 +196,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
     train_returns = []
     
     with tqdm(total=config["max_timesteps"]) as pbar:
-        
+
         # runs episodes until maximum number of timesteps is reached 
         while timesteps_elapsed < config["max_timesteps"]:
             elapsed_seconds = time.time() - start_time
@@ -202,7 +223,7 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
                 max_steps=config["episode_length"],
                 batch_size=config["batch_size"],
             )
-            
+
             timesteps_elapsed += episode_timesteps
 
             train_timesteps.append(timesteps_elapsed)
@@ -250,6 +271,17 @@ def train(env, config, fa, agent, output = True, render=False, online=False, thr
                 eval_times_all.append(time.time() - start_time)                  
        
     return np.array(eval_returns_all), np.array(eval_times_all), np.array(train_returns), np.array(train_timesteps)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -497,6 +529,30 @@ def solve(env, config, fa, agent, target_return, op, render=False, online=False,
             n=1
 
     return timesteps_elapsed, n_eps, n
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def train_time(env, config, fa, agent, online=False, threshold=-1):

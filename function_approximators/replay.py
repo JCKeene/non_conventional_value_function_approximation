@@ -35,6 +35,11 @@ class ReplayBuffer:
     '''
     def __init__(self, capacity, threshold=0):
 
+        # Threshold values:
+        #   -1 : put all information in
+        #    0 : put only unique (s,a) pairs into memory
+        #    >0 : based on minimum distance
+
         self.capacity = capacity
         self.memory = None
         self.count = 0
@@ -94,9 +99,10 @@ class ReplayBuffer:
             self.count += 1
 
         else:
+            # compare distances - could sort to make faster?
             a = np.concatenate((args[0], args[1])).reshape(1,self.m)
             distances = dist.cdist(a,self.matrix,'euclidean')
-            
+
             if np.min(distances) > self.threshold: 
                 self.matrix = np.concatenate((self.matrix, a), axis=0)
                 # push transition in replay buffer
@@ -105,6 +111,7 @@ class ReplayBuffer:
                     self.memory[i][index, :] = arg
                 # update count
                 self.count += 1
+
 
     def sample(self, batch_size, device = "cpu"):
         '''
